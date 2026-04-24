@@ -1,3 +1,65 @@
+# PDMRevolve Frontend
+
+Vite + React + Tailwind CSS web app for `PDMRevolve` borrower/admin experiences.
+
+## Features in this starter
+
+- Dashboard page (pilot KPI snapshot)
+- Repayments page (recent verified transactions)
+- Education page (module catalog)
+- API integration via `VITE_API_BASE_URL`
+
+## Tech stack
+
+- Vite
+- React
+- React Router
+- Tailwind CSS (via `@tailwindcss/vite`)
+
+## Environment variables
+
+Create `.env` from the example:
+
+```bash
+cp .env.example .env
+```
+
+Required:
+
+- `VITE_API_BASE_URL`  
+  - Local: `http://localhost:4000`
+  - Production: `https://<your-render-api>.onrender.com`
+
+## Local development
+
+```bash
+npm install
+npm run dev
+```
+
+App runs on `http://localhost:5173`.
+
+## Build for production
+
+```bash
+npm run build
+npm run preview
+```
+
+## Deploy on Vercel
+
+1. Import this repository/folder in Vercel.
+2. Ensure framework is detected as **Vite**.
+3. Set environment variable:
+   - `VITE_API_BASE_URL=https://<your-render-api>.onrender.com`
+4. Deploy.
+
+## Common issues
+
+- **CORS errors in browser**  
+  Ensure backend `CORS_ORIGIN` matches your Vercel domain exactly.
+- **Frontend cannot reach API**  
+  Confirm `VITE_API_BASE_URL` is set in Vercel project settings and redeploy.
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

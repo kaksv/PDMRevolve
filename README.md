@@ -4,9 +4,10 @@ Vite + React + Tailwind CSS web app for `PDMRevolve` borrower/admin experiences.
 
 ## Features in this starter
 
-- Dashboard page (pilot KPI snapshot)
+- Dashboard page (pilot KPI snapshot, API timestamps, CSV export)
 - Repayments page (recent verified transactions)
-- Education page (module catalog)
+- Education page (module catalog, filters, links to module detail)
+- Module detail route: `/education/:code`
 - API integration via `VITE_API_BASE_URL`
 
 ## Tech stack

@@ -1,5 +1,18 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../lib/api'
+import { buildDashboardCsv, downloadTextFile } from '../lib/dashboardCsv'
+
+function formatDateTime(iso) {
+  if (!iso) return '—'
+  try {
+    return new Date(iso).toLocaleString(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    })
+  } catch {
+    return iso
+  }
+}
 
 function ProgressRing({ value, size = 56, stroke = 5, label }) {
   const r = (size - stroke) / 2
@@ -110,7 +123,14 @@ export default function DashboardPage() {
   }
 
   const { metrics, topParishes } = state.data
+  const meta = state.data.meta || { generatedAt: null, dataAsOf: null }
   const maxRate = Math.max(...topParishes.map((p) => p.repaymentRate), 1)
+
+  function handleExportCsv() {
+    const csv = buildDashboardCsv(state.data)
+    const stamp = (meta.generatedAt || new Date().toISOString()).slice(0, 10)
+    downloadTextFile(`pdmrevolve-dashboard-${stamp}.csv`, csv)
+  }
 
   const icons = {
     clock: (
@@ -135,16 +155,42 @@ export default function DashboardPage() {
       <section className="relative overflow-hidden rounded-2xl border border-emerald-200/60 bg-gradient-to-br from-emerald-50 via-white to-slate-50 px-6 py-8 shadow-sm sm:px-8">
         <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-100/40 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-slate-200/30 blur-2xl" />
-        <div className="relative max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Transparency dashboard</p>
-          <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Pilot performance snapshot</h2>
-          <p className="mt-3 text-base leading-relaxed text-slate-600">
-            Anonymized indicators for district, parish, and SACCO teams—aligned with PDM pillars on financial inclusion,
-            mindset change, and governance.
-          </p>
-          <p className="mt-4 text-xs text-slate-500">
-            Data refreshes when you reload. Live auto-refresh can be added when your API supports it.
-          </p>
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">Transparency dashboard</p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Pilot performance snapshot</h2>
+            <p className="mt-3 text-base leading-relaxed text-slate-600">
+              Anonymized indicators for district, parish, and SACCO teams—aligned with PDM pillars on financial inclusion,
+              mindset change, and governance.
+            </p>
+            <dl className="mt-4 grid gap-2 text-xs text-slate-600 sm:grid-cols-2 sm:gap-x-6">
+              <div>
+                <dt className="font-medium text-slate-500">Snapshot from API</dt>
+                <dd className="mt-0.5 tabular-nums text-slate-700">{formatDateTime(meta.generatedAt)}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-slate-500">Underlying data last changed</dt>
+                <dd className="mt-0.5 tabular-nums text-slate-700">
+                  {meta.dataAsOf ? formatDateTime(meta.dataAsOf) : 'Not tracked (mock or legacy API)'}
+                </dd>
+              </div>
+            </dl>
+            <p className="mt-3 text-xs text-slate-500">
+              Reload the page to refresh figures. Auto-refresh can be wired when your ops team wants live boards.
+            </p>
+          </div>
+          <div className="flex shrink-0 flex-col gap-2 sm:flex-row lg:flex-col">
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-800 shadow-sm transition hover:bg-emerald-50"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Export CSV
+            </button>
+          </div>
         </div>
       </section>
 

@@ -1,7 +1,8 @@
-import { NavLink, Route, Routes } from 'react-router-dom'
+import { NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import DashboardPage from './pages/DashboardPage'
 import RepaymentsPage from './pages/RepaymentsPage'
 import EducationPage from './pages/EducationPage'
+import EducationModuleDetailPage from './pages/EducationModuleDetailPage'
 
 const links = [
   { to: '/', label: 'Dashboard' },
@@ -10,6 +11,8 @@ const links = [
 ]
 
 function App() {
+  const location = useLocation()
+
   return (
     <div className="min-h-screen">
       <header className="border-b border-slate-200 bg-white">
@@ -24,11 +27,15 @@ function App() {
                 key={link.to}
                 to={link.to}
                 end={link.to === '/'}
-                className={({ isActive }) =>
-                  `rounded-lg px-3 py-2 text-sm font-medium ${
-                    isActive ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600'
+                className={({ isActive }) => {
+                  const educationActive =
+                    link.to === '/education' &&
+                    (location.pathname === '/education' || location.pathname.startsWith('/education/'))
+                  const active = link.to === '/education' ? educationActive : isActive
+                  return `rounded-lg px-3 py-2 text-sm font-medium ${
+                    active ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600'
                   }`
-                }
+                }}
               >
                 {link.label}
               </NavLink>
@@ -41,6 +48,7 @@ function App() {
         <Routes>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/repayments" element={<RepaymentsPage />} />
+          <Route path="/education/:code" element={<EducationModuleDetailPage />} />
           <Route path="/education" element={<EducationPage />} />
         </Routes>
       </main>

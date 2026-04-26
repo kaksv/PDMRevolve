@@ -1,50 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { api } from '../lib/api'
-
-const CHANNEL_LABELS = {
-  sms: 'SMS',
-  ussd: 'USSD',
-  web_audio: 'Web audio',
-  web_video: 'Web video',
-}
-
-const LANGUAGE_LABELS = {
-  en: 'English',
-  lg: 'Luganda',
-  sw: 'Swahili',
-  ach: 'Acholi',
-  run: 'Runyankole',
-}
-
-function channelIcon(type) {
-  const t = (type || '').toLowerCase()
-  if (t === 'sms') {
-    return (
-      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-      </svg>
-    )
-  }
-  if (t === 'ussd') {
-    return (
-      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-      </svg>
-    )
-  }
-  return (
-    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-    </svg>
-  )
-}
-
-function channelStyles(type) {
-  const t = (type || '').toLowerCase()
-  if (t === 'sms') return 'bg-sky-100 text-sky-800 ring-sky-200/60'
-  if (t === 'ussd') return 'bg-violet-100 text-violet-800 ring-violet-200/60'
-  return 'bg-amber-100 text-amber-900 ring-amber-200/60'
-}
+import { CHANNEL_LABELS, LANGUAGE_LABELS, channelIcon, channelStyles } from '../education/sharedUi'
 
 function FilterChip({ active, onClick, children }) {
   return (
@@ -197,7 +154,10 @@ export default function EducationPage() {
             const channelLabel = CHANNEL_LABELS[module.channelType] || module.channelType
             return (
               <li key={module.code}>
-                <article className="group flex h-full flex-col rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm transition hover:border-indigo-200 hover:shadow-md">
+                <Link
+                  to={`/education/${encodeURIComponent(module.code)}`}
+                  className="group flex h-full flex-col rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm transition hover:border-indigo-200 hover:shadow-md"
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div
                       className={`flex h-12 w-12 items-center justify-center rounded-xl ring-1 ${channelStyles(module.channelType)}`}
@@ -218,13 +178,18 @@ export default function EducationPage() {
                     <span className="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800">
                       {channelLabel}
                     </span>
+                    {module.estimatedMinutes != null && (
+                      <span className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-800">
+                        ~{module.estimatedMinutes} min
+                      </span>
+                    )}
                   </div>
                   <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-600">{module.summary}</p>
                   <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
-                    <span className="text-xs text-slate-400">Completion tracking coming soon</span>
-                    <span className="text-xs font-medium text-slate-400">Open</span>
+                    <span className="text-xs text-slate-400">View module details</span>
+                    <span className="text-xs font-semibold text-indigo-600 group-hover:text-indigo-700">Open →</span>
                   </div>
-                </article>
+                </Link>
               </li>
             )
           })}

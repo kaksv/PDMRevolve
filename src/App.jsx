@@ -3,11 +3,13 @@ import DashboardPage from './pages/DashboardPage'
 import RepaymentsPage from './pages/RepaymentsPage'
 import EducationPage from './pages/EducationPage'
 import EducationModuleDetailPage from './pages/EducationModuleDetailPage'
+import EducationAdminPage from './pages/EducationAdminPage'
 
 const links = [
   { to: '/', label: 'Dashboard' },
   { to: '/repayments', label: 'Repayments' },
   { to: '/education', label: 'Education' },
+  { to: '/education/admin', label: 'Education Admin' },
 ]
 
 function App() {
@@ -30,8 +32,11 @@ function App() {
                 className={({ isActive }) => {
                   const educationActive =
                     link.to === '/education' &&
-                    (location.pathname === '/education' || location.pathname.startsWith('/education/'))
-                  const active = link.to === '/education' ? educationActive : isActive
+                    (location.pathname === '/education' ||
+                      (location.pathname.startsWith('/education/') &&
+                        !location.pathname.startsWith('/education/admin')))
+                  const educationAdminActive = link.to === '/education/admin' && location.pathname.startsWith('/education/admin')
+                  const active = educationActive || educationAdminActive || isActive
                   return `rounded-lg px-3 py-2 text-sm font-medium ${
                     active ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600'
                   }`
@@ -48,6 +53,7 @@ function App() {
         <Routes>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/repayments" element={<RepaymentsPage />} />
+          <Route path="/education/admin" element={<EducationAdminPage />} />
           <Route path="/education/:code" element={<EducationModuleDetailPage />} />
           <Route path="/education" element={<EducationPage />} />
         </Routes>

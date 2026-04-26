@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../lib/api'
-import { CHANNEL_LABELS, LANGUAGE_LABELS } from '../education/sharedUi'
+import { CHANNEL_LABELS, LANGUAGE_LABELS, channelStyles } from '../education/sharedUi'
 
 function isHttpUrl(value) {
   if (!value || typeof value !== 'string') return false
@@ -13,9 +13,28 @@ function isHttpUrl(value) {
   }
 }
 
+function getYouTubeEmbedUrl(url) {
+  if (!isHttpUrl(url)) return null
+  try {
+    const parsed = new URL(url)
+    if (parsed.hostname.includes('youtube.com')) {
+      const id = parsed.searchParams.get('v')
+      return id ? `https://www.youtube.com/embed/${id}` : null
+    }
+    if (parsed.hostname.includes('youtu.be')) {
+      const id = parsed.pathname.replace('/', '')
+      return id ? `https://www.youtube.com/embed/${id}` : null
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
 export default function EducationModuleDetailPage() {
   const { code } = useParams()
   const [state, setState] = useState({ loading: true, module: null, error: '' })
+  const [tab, setTab] = useState('video')
 
   const load = useCallback(() => {
     if (!code) return
@@ -35,6 +54,30 @@ export default function EducationModuleDetailPage() {
   useEffect(() => {
     load()
   }, [load])
+
+  useEffect(() => {
+    if (!state.module) return
+
+    const m = state.module
+    const videoUrl = m.videoUrl || m.contentUri || null
+    const hasVideo = isHttpUrl(videoUrl)
+    const hasText = Boolean(m.textContent && m.textContent.trim())
+
+    const saved = window.localStorage.getItem('education-format-preference')
+    if (saved === 'video' || saved === 'text') {
+      setTab(saved)
+      return
+    }
+    if (m.defaultFormat === 'text' && hasText) {
+      setTab('text')
+      return
+    }
+    if (hasVideo) {
+      setTab('video')
+      return
+    }
+    setTab('text')
+  }, [state.module])
 
   if (state.loading) {
     return (
@@ -63,7 +106,17 @@ export default function EducationModuleDetailPage() {
   const m = state.module
   const langLabel = LANGUAGE_LABELS[m.languageCode] || m.languageCode?.toUpperCase()
   const channelLabel = CHANNEL_LABELS[m.channelType] || m.channelType
-  const hasMedia = isHttpUrl(m.contentUri)
+  const videoUrl = m.videoUrl || m.contentUri || null
+  const hasVideo = isHttpUrl(videoUrl)
+  const hasText = Boolean(m.textContent && m.textContent.trim())
+
+  function setTabAndRemember(nextTab) {
+    setTab(nextTab)
+    window.localStorage.setItem('education-format-preference', nextTab)
+  }
+
+  const activeTab = tab === 'video' && !hasVideo ? 'text' : tab === 'text' && !hasText ? 'video' : tab
+  const youtubeEmbed = getYouTubeEmbedUrl(videoUrl)
 
   return (
     <div className="space-y-8">
@@ -107,27 +160,107 @@ export default function EducationModuleDetailPage() {
         <p className="text-base leading-relaxed text-slate-700">{m.summary}</p>
       </section>
 
-      <section className="max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Learning content</h2>
-        {hasMedia ? (
-          <div className="mt-4 space-y-4">
-            <p className="text-sm text-slate-600">Open the hosted lesson or media file in a new tab.</p>
-            <a
-              href={m.contentUri}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700"
-            >
-              Open content
-            </a>
-            <p className="break-all font-mono text-xs text-slate-500">{m.contentUri}</p>
+      <section className="grid gap-6 lg:grid-cols-12">
+        <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:col-span-8">
+          <div className="border-b border-slate-200 bg-slate-50 p-3">
+            <div className="inline-flex rounded-lg bg-white p-1 shadow-sm ring-1 ring-slate-200">
+              <button
+                type="button"
+                disabled={!hasVideo}
+                onClick={() => setTabAndRemember('video')}
+                className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+                  activeTab === 'video' ? 'bg-slate-900 text-white' : 'text-slate-600'
+                } ${!hasVideo ? 'cursor-not-allowed opacity-40' : ''}`}
+              >
+                Watch
+              </button>
+              <button
+                type="button"
+                disabled={!hasText}
+                onClick={() => setTabAndRemember('text')}
+                className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+                  activeTab === 'text' ? 'bg-slate-900 text-white' : 'text-slate-600'
+                } ${!hasText ? 'cursor-not-allowed opacity-40' : ''}`}
+              >
+                Read
+              </button>
+            </div>
           </div>
-        ) : (
-          <p className="mt-4 text-sm text-slate-600">
-            No web URL is linked for this module yet. Delivery may be via SMS or USSD prompts; your team can attach a
-            content_uri in the database when media is ready.
-          </p>
-        )}
+
+          {activeTab === 'video' ? (
+            <div className="space-y-4 p-4">
+              {youtubeEmbed ? (
+                <div className="aspect-video overflow-hidden rounded-xl bg-black">
+                  <iframe
+                    title={`${m.title} video`}
+                    src={youtubeEmbed}
+                    className="h-full w-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                  />
+                </div>
+              ) : (
+                <div className="flex aspect-video items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+                  External video source
+                </div>
+              )}
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm text-slate-600">
+                  {m.estimatedMinutesVideo != null ? `Approx. ${m.estimatedMinutesVideo} min video` : 'Video lesson'}
+                </p>
+                {hasVideo && (
+                  <a
+                    href={videoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                  >
+                    Open source
+                  </a>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 p-5">
+              <p className="text-sm text-slate-500">
+                {m.estimatedMinutesText != null ? `Approx. ${m.estimatedMinutesText} min read` : 'Text lesson'}
+              </p>
+              <article className="prose prose-slate max-w-none rounded-xl border border-slate-200 bg-slate-50 p-4">
+                {(m.textContent || 'No text lesson available yet.').split('\n').map((line, i) => (
+                  <p key={`${line}-${i}`}>{line}</p>
+                ))}
+              </article>
+            </div>
+          )}
+        </article>
+
+        <aside className="space-y-4 lg:col-span-4">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Delivery options</h2>
+            <ul className="mt-3 space-y-3 text-sm text-slate-600">
+              <li className="flex items-start justify-between gap-3">
+                <span>Video format</span>
+                <span className={hasVideo ? 'text-emerald-700 font-medium' : 'text-slate-400'}>{hasVideo ? 'Available' : 'Not available'}</span>
+              </li>
+              <li className="flex items-start justify-between gap-3">
+                <span>Written format</span>
+                <span className={hasText ? 'text-emerald-700 font-medium' : 'text-slate-400'}>{hasText ? 'Available' : 'Not available'}</span>
+              </li>
+              <li className="flex items-start justify-between gap-3">
+                <span>Recommended channel</span>
+                <span className="font-medium text-slate-700">{channelLabel}</span>
+              </li>
+            </ul>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Facilitator note</h2>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600">
+              For low-data users, send the text version by SMS/USSD prompt. For smartphone users, share the video link
+              and keep the written summary as backup.
+            </p>
+          </div>
+        </aside>
       </section>
 
       <div>

@@ -103,6 +103,14 @@ export default function EducationPage() {
             Short modules tied to real PDM enterprise groups—repayment culture, record-keeping, pricing, and scaling.
             Content can be delivered over SMS, USSD, or richer web experiences as your rollout expands.
           </p>
+          <div className="mt-4">
+            <Link
+              to="/education/admin"
+              className="inline-flex rounded-lg border border-indigo-300 bg-white px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50"
+            >
+              Open content editor
+            </Link>
+          </div>
         </div>
       </section>
 
